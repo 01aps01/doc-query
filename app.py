@@ -1,9 +1,19 @@
+import os
+from dotenv import load_dotenv
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ENV_PATH = os.path.join(BASE_DIR, ".env")
+
+load_dotenv(dotenv_path=ENV_PATH)
+
 from fastapi import FastAPI, UploadFile, File, HTTPException
+from pydantic import BaseModel
+from core.embed import embed_texts
+from core.llm import ask_llm
+from core.vectordb import init_pinecone, upsert_vectors
 
 from core.pdf import extract_text_pages
 from core.splitter import split_text
-from core.embed import embed_texts
-from core.vectordb import init_pinecone, upsert_vectors
 
 
 app = FastAPI(title="DocQuery - Minimal Ingest")
@@ -12,13 +22,23 @@ app = FastAPI(title="DocQuery - Minimal Ingest")
 pine_index = init_pinecone()
 
 
+def clean_matches(matches):
+    cleaned = []
+    for m in matches:
+        cleaned.append({
+            "id": m["id"],
+            "score": float(m["score"]),
+            "metadata": dict(m["metadata"])
+        })
+    return cleaned
+
+
 @app.post("/ingest")
 async def ingest(file: UploadFile = File(...)):
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are supported.")
 
     pdf_bytes = await file.read()
-
     pages = extract_text_pages(pdf_bytes)
 
     docs = []
@@ -30,7 +50,7 @@ async def ingest(file: UploadFile = File(...)):
             meta = {
                 "source": file.filename,
                 "page": p["page_no"],
-                "chunk_text": chunk[:1000],
+                "chunk_text": chunk[:1000]
             }
             docs.append((doc_id, chunk, meta))
 
@@ -47,3 +67,29 @@ async def ingest(file: UploadFile = File(...)):
     upsert_vectors(vectors)
 
     return {"status": "indexed", "chunks": len(vectors)}
+
+
+@app.post("/query")
+async def query_api(question: str):
+
+    q_emb = embed_texts([question])[0]
+    q_emb = q_emb.tolist()  
+
+    results = pine_index.query(
+        vector=q_emb,
+        top_k=5,
+        include_metadata=True
+    )
+
+    context = ""
+    for match in results["matches"]:
+        chunk = match["metadata"].get("chunk_text", "")
+        context += chunk + "\n\n"
+
+    answer = ask_llm(question, context)
+
+    return {
+        "question": question,
+        "answer": str(answer),
+        "sources": clean_matches(results["matches"])
+    }
