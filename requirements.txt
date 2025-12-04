@@ -3,7 +3,7 @@ uvicorn[standard]
 pymupdf
 langchain
 openai
-pinecone-client
+pinecone
 httpx
 python-multipart
 pydantic
