@@ -10,11 +10,10 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from pydantic import BaseModel
 from core.embed import embed_texts
 from core.llm import ask_llm
-from core.vectordb import init_pinecone, upsert_vectors
+from core.vectordb import init_pinecone, upsert_vectors, clear_index
 
 from core.pdf import extract_text_pages
 from core.splitter import split_text
-
 
 app = FastAPI(title="DocQuery - Minimal Ingest")
 
@@ -56,6 +55,7 @@ async def ingest(file: UploadFile = File(...)):
 
     if not docs:
         return {"status": "no_text_found", "chunks": 0}
+    clear_index()
 
     texts = [t for (_id, t, _m) in docs]
     embeddings = embed_texts(texts)

@@ -46,3 +46,13 @@ def upsert_vectors(vectors):
     index.upsert(
         vectors=[(vid, emb, meta) for vid, emb, meta in vectors]
     )
+
+def clear_index():
+    pc = pinecone.Pinecone(api_key=PINECONE_API)
+    index = pc.Index(INDEX_NAME)
+
+    try:
+        index.delete(delete_all=True)
+        print("Index cleared successfully.")
+    except Exception as e:
+        print("Delete failed:", e)
