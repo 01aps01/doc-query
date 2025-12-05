@@ -11,11 +11,21 @@ from pydantic import BaseModel
 from core.embed import embed_texts
 from core.llm import ask_llm
 from core.vectordb import init_pinecone, upsert_vectors, clear_index
+from fastapi.middleware.cors import CORSMiddleware
+
 
 from core.pdf import extract_text_pages
 from core.splitter import split_text
 
 app = FastAPI(title="DocQuery - Minimal Ingest")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 pine_index = init_pinecone()
