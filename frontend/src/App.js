@@ -1,32 +1,31 @@
 import React, { useState, useRef } from "react";
 import "./App.css";
 
+const BACKEND_URL = "https://docquery-backend-mysi.onrender.com";
+
 function App() {
   const [pdfUrl, setPdfUrl] = useState(null);
   const [messages, setMessages] = useState([]);
   const inputRef = useRef();
-  const hiddenFileInput = useRef(); // for upload button
+  const hiddenFileInput = useRef(); 
 
-  // Trigger hidden input
   const triggerUpload = () => hiddenFileInput.current.click();
 
-  // Go to home page
   const goHome = () => {
     setPdfUrl(null);
     setMessages([]);
   };
 
-  // Upload PDF
   const handleUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    setPdfUrl(URL.createObjectURL(file)); // show preview
+    setPdfUrl(URL.createObjectURL(file));
 
     let formData = new FormData();
     formData.append("file", file);
 
-    const res = await fetch("http://127.0.0.1:8000/ingest", {
+    const res = await fetch(`${BACKEND_URL}/ingest`, {
       method: "POST",
       body: formData,
     });
@@ -41,7 +40,6 @@ function App() {
     ]);
   };
 
-  // Ask question
   const askQuestion = async () => {
     const question = inputRef.current.value.trim();
     if (!question) return;
@@ -49,18 +47,17 @@ function App() {
     setMessages((prev) => [...prev, { sender: "user", text: question }]);
     inputRef.current.value = "";
 
-    const res = await fetch(
-      `http://127.0.0.1:8000/query?question=${encodeURIComponent(question)}`,
-      { method: "POST" }
-    );
+    const res = await fetch(`${BACKEND_URL}/query?question=${encodeURIComponent(question)}`, {
+      method: "POST",
+    });
 
     const data = await res.json();
+
     setMessages((prev) => [...prev, { sender: "bot", text: data.answer }]);
   };
 
   return (
     <>
-      {/* Top Navigation Bar */}
       <div className="navbar">
         <div className="logo" onClick={goHome} style={{ cursor: "pointer" }}>
           DocQuery
@@ -70,7 +67,6 @@ function App() {
           Upload PDF
         </button>
 
-        {/* Hidden File Input */}
         <input
           type="file"
           accept="application/pdf"
@@ -80,7 +76,6 @@ function App() {
         />
       </div>
 
-      {/* LANDING PAGE */}
       {!pdfUrl && (
         <div className="landing">
           <h1 className="title">
@@ -95,7 +90,6 @@ function App() {
             <div className="uploadIcon">📄</div>
             <p>Click or drag your PDF here</p>
 
-            {/* Real file input */}
             <input
               type="file"
               accept="application/pdf"
@@ -105,15 +99,12 @@ function App() {
         </div>
       )}
 
-      {/* CHAT PAGE */}
       {pdfUrl && (
         <div className="mainLayout">
-          {/* LEFT PDF PANEL */}
           <div className="pdfPanel">
             <iframe src={pdfUrl} title="PDF Preview" className="pdfView"></iframe>
           </div>
 
-          {/* RIGHT CHAT PANEL */}
           <div className="chatPanel">
             <div className="chatBox">
               {messages.map((msg, i) => (
@@ -124,13 +115,11 @@ function App() {
             </div>
 
             <div className="inputRow">
-              <input 
-                ref={inputRef} 
-                placeholder="Ask anything..." 
+              <input
+                ref={inputRef}
+                placeholder="Ask anything..."
                 onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    askQuestion();
-                  }
+                  if (e.key === "Enter") askQuestion();
                 }}
               />
               <button onClick={askQuestion}>Send</button>
