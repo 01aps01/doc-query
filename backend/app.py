@@ -8,7 +8,7 @@ load_dotenv(dotenv_path=ENV_PATH)
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from pydantic import BaseModel
-from core.embed import embed_texts
+from core.embed import embed_texts, reset_vectorizer
 from core.llm import ask_llm
 from core.vectordb import init_pinecone, upsert_vectors, clear_index
 from fastapi.middleware.cors import CORSMiddleware
@@ -65,6 +65,7 @@ async def ingest(file: UploadFile = File(...)):
 
     if not docs:
         return {"status": "no_text_found", "chunks": 0}
+    reset_vectorizer()
     clear_index()
 
     texts = [t for (_id, t, _m) in docs]

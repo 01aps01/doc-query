@@ -7,4 +7,5 @@ groq
 httpx
 python-multipart
 pymupdf
-sentence-transformers
+numpy
+scikit-learn
