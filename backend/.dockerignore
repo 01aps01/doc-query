@@ -1,0 +1,16 @@
+venv/
+.venv/
+
+__pycache__/
+*/__pycache__/
+*.pyc
+
+*.pdf
+*.log
+
+.git/
+.gitignore
+
+.env
+
+.DS_Store
