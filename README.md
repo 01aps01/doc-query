@@ -43,4 +43,5 @@ GROQ_API_KEY=
 ## ▶️ Run Locally
 ```
 install -r requirements.txt
-uvicorn main:app --reload```
+uvicorn main:app --reload
+```
